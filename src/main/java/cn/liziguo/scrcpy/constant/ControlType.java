@@ -17,4 +17,10 @@ public interface ControlType {
     byte TYPE_SET_CLIPBOARD = 9;
     byte TYPE_SET_SCREEN_POWER_MODE = 10;
     byte TYPE_ROTATE_DEVICE = 11;
+    byte UHID_CREATE = 12;
+    byte UHID_INPUT = 13;
+    byte UHID_DESTROY = 14;
+    byte OPEN_HARD_KEYBOARD_SETTINGS = 15;
+    byte START_APP = 16;
+    byte RESET_VIDEO = 17;
 }

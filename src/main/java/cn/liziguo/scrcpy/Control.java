@@ -1,9 +1,6 @@
 package cn.liziguo.scrcpy;
 
-import cn.liziguo.scrcpy.constant.Action;
-import cn.liziguo.scrcpy.constant.ControlType;
-import cn.liziguo.scrcpy.constant.KeyCode;
-import cn.liziguo.scrcpy.constant.PowerMode;
+import cn.liziguo.scrcpy.constant.*;
 import cn.liziguo.scrcpy.exception.ControlException;
 
 import java.io.DataInputStream;
@@ -189,13 +186,34 @@ public class Control {
             out.writeInt((int) (y * resolutionHeight));
             out.writeShort(resolutionWidth);
             out.writeShort(resolutionHeight);
+            // 压力 0-65535
             out.writeShort(0xFFFF);
-            out.writeInt(1);
-            out.writeInt(1);
+            out.writeInt(AndroidMotionEventToolType.AMOTION_EVENT_TOOL_TYPE_FINGER);
+            out.writeInt(AndroidMotionEventToolType.AMOTION_EVENT_TOOL_TYPE_FINGER);
             out.flush();
         } catch (IOException e) {
             throw new ControlException(e);
         }
+    }
+
+    short floatToI16FixedPoint(double value) {
+        // 钳制输入到合法范围 [-1.0, 1.0]
+        if (value > 1.0f) {
+            value = 1.0;
+        } else if (value < -1.0) {
+            value = -1.0;
+        }
+        value *= 32768.0;
+        // 四舍五入到长整型
+        long rounded = Math.round(value);
+
+        // 钳制到short的范围
+        if (rounded > Short.MAX_VALUE) {
+            rounded = Short.MAX_VALUE;
+        } else if (rounded < Short.MIN_VALUE) {
+            rounded = Short.MIN_VALUE;
+        }
+        return (short) rounded;
     }
 
     /**
@@ -241,8 +259,9 @@ public class Control {
             out.writeInt((int) (y * resolutionHeight));
             out.writeShort(resolutionWidth);
             out.writeShort(resolutionHeight);
-            out.writeInt((int) (h * resolutionWidth));
-            out.writeInt((int) (v * resolutionHeight));
+            out.writeShort(floatToI16FixedPoint(h));
+            out.writeShort(floatToI16FixedPoint(v));
+            out.writeInt(AndroidMotionEventToolType.AMOTION_EVENT_TOOL_TYPE_MOUSE);
             out.flush();
         } catch (IOException e) {
             throw new ControlException(e);
@@ -372,6 +391,7 @@ public class Control {
         }
     }
 
+
     /**
      * 获取Android设备剪贴板中的文本内容。
      *
@@ -389,11 +409,12 @@ public class Control {
      *   <li>在多应用共享剪贴板环境下可能读取到其他应用的内容</li>
      * </ul>
      *
+     * @param copyKey true = 拷贝, false = 剪切
      * @return 剪贴板中的文本内容
      * @throws ControlException 如果发生I/O错误或权限不足
      * @see #setClipboard(String, boolean) 设置剪贴板内容
      */
-    public synchronized String getClipboard() {
+    public synchronized String getClipboard(boolean copyKey) {
         try {
             int available;
             while ((available = in.available()) > 0) {
@@ -403,6 +424,7 @@ public class Control {
                 in.read(buffer);
             }
             out.write(ControlType.TYPE_GET_CLIPBOARD);
+            out.write(copyKey ? 1 : 2);
             out.flush();
             int read = in.readUnsignedByte();
             assert read == 0;
@@ -446,13 +468,14 @@ public class Control {
      * @param paste 是否立即粘贴到当前输入框
      * @throws ControlException     如果发生I/O错误或权限不足
      * @throws NullPointerException 如果text参数为null
-     * @see #getClipboard() 获取剪贴板内容
+     * @see #getClipboard(boolean) 获取剪贴板内容
      */
     public synchronized void setClipboard(String text, boolean paste) {
+        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
         try {
             out.write(ControlType.TYPE_SET_CLIPBOARD);
+            out.writeLong(0);
             out.writeBoolean(paste);
-            byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
             out.writeInt(bytes.length);
             out.write(bytes);
             out.flush();
@@ -469,6 +492,40 @@ public class Control {
     public synchronized void rotateDevice() {
         try {
             out.write(ControlType.TYPE_ROTATE_DEVICE);
+            out.flush();
+        } catch (IOException e) {
+            throw new ControlException(e);
+        }
+    }
+
+    public synchronized void openHardKeyboardSettings() {
+        try {
+            out.write(ControlType.OPEN_HARD_KEYBOARD_SETTINGS);
+            out.flush();
+        } catch (IOException e) {
+            throw new ControlException(e);
+        }
+    }
+
+    public synchronized void resetVideo() {
+        try {
+            out.write(ControlType.RESET_VIDEO);
+            out.flush();
+        } catch (IOException e) {
+            throw new ControlException(e);
+        }
+    }
+
+    public synchronized void startApp(String text) {
+        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+        int length = bytes.length;
+        if (length > 0xFF) {
+            throw new IllegalArgumentException();
+        }
+        try {
+            out.write(ControlType.START_APP);
+            out.write(length);
+            out.write(bytes);
             out.flush();
         } catch (IOException e) {
             throw new ControlException(e);

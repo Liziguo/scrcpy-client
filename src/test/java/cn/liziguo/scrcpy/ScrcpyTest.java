@@ -105,12 +105,13 @@ public class ScrcpyTest extends JFrame {
                         break;
                     case 118:
                         // F7
-                        System.out.println("读取剪切板数据: " + scrcpyClient.getControl().getClipboard());
+                        System.out.println("读取剪切板数据: " + scrcpyClient.getControl().getClipboard(true));
                         break;
                     case 119:
                         // F8
-                        System.out.println("写入剪切板数据");
-                        scrcpyClient.getControl().setClipboard("写入剪切板数据", true);
+                        double random = Math.random();
+                        System.out.println("写入剪切板数据: " + random);
+                        scrcpyClient.getControl().setClipboard(random + "", true);
                         break;
                     case 120:
                         // F9
@@ -121,6 +122,16 @@ public class ScrcpyTest extends JFrame {
                         // F10
                         System.out.println("向Android中输入文本");
                         scrcpyClient.getControl().text("hhh");
+                        break;
+                    case 122:
+                        // F11
+                        System.out.println("打开键盘设置");
+                        scrcpyClient.getControl().openHardKeyboardSettings();
+                        break;
+                    case 123:
+                        // F12
+                        System.out.println("启动微信");
+                        scrcpyClient.getControl().startApp("com.tencent.mm");
                         break;
                     case 'W':
                         scrcpyClient.getControl().touch(0.5, 0.4, Action.DOWN, 2);
@@ -240,11 +251,23 @@ public class ScrcpyTest extends JFrame {
 
                 @Override
                 public void mouseWheelMoved(MouseWheelEvent e) {
-                    System.out.println(e.getWheelRotation());
-                    if (e.getWheelRotation() > 0) {
-                        scrcpyClient.getControl().scroll(0.5, 0.5, 0.2, 0);
+                    Control control = scrcpyClient.getControl();
+                    if (e.isShiftDown()) {
+                        // 水平滚动（向右/向左）
+                        int rotation = e.getWheelRotation();
+                        if (rotation > 0) {
+                            control.scroll(0.5, 0.5, 1, 0);
+                        } else {
+                            control.scroll(0.5, 0.5, -1, 0);
+                        }
                     } else {
-                        scrcpyClient.getControl().scroll(0.5, 0.5, 0, 0.0);
+                        // 垂直滚动（向下/向上）
+                        int rotation = e.getWheelRotation();
+                        if (rotation > 0) {
+                            control.scroll(0.5, 0.5, 0, 1);
+                        } else {
+                            control.scroll(0.5, 0.5, 0, -1);
+                        }
                     }
                 }
             });

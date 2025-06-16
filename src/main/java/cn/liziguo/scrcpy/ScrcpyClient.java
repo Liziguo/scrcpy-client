@@ -20,7 +20,8 @@ import java.util.function.Consumer;
 public class ScrcpyClient implements Closeable {
 
     static final String ADB_PATH = "adb.exe";
-    static final String JAR_NAME = "scrcpy-server.jar";
+    static final String JAR_NAME = "scrcpy-server";
+    static final String SERVER_VERSION = "3.3";
 
     /**
      * 安卓设备 也可以是host:port的形式远程调试(如果远程调试连接不上可以尝试进行一次有线调试之后再远程调试就能连上了)
@@ -120,7 +121,7 @@ public class ScrcpyClient implements Closeable {
                 "app_process",
                 "/",
                 "com.genymobile.scrcpy.Server",
-                "2.4",
+                SERVER_VERSION,
                 "log_level=info",
                 "max_size=" + maxWidth,
                 "max_fps=" + maxFps,
