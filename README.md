@@ -77,6 +77,8 @@ Execute main method and follow prompts to connect device
 | F8      | Write to device clipboard                  |
 | F9      | Rotate device screen                       |
 | F10     | Text input (requires active input field)   |
+| F11     | Open the hardware keyboard settings        |
+| F12     | Open WeChat `com.tencent.mm`               |
 | W/A/S/D | Multi-touch test (triggers in center area) |
 
 ## 💻 Development Example
